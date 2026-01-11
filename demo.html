@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katkısız - Mobil Uygulama Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.95;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding: 10px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .phone-container {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .phone-frame {
+            width: 375px;
+            background: #000;
+            border-radius: 40px;
+            padding: 12px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 30px;
+            background: #000;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            z-index: 10;
+        }
+
+        .screen {
+            background: #f5f5f5;
+            border-radius: 30px;
+            overflow-y: auto;
+            height: 750px;
+            position: relative;
+        }
+
+        .screen-content {
+            display: none;
+        }
+
+        .screen-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Status Bar */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 45px 20px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #000;
+        }
+
+        /* Common Components */
+        .app-header {
+            background: white;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .app-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a1a;
+            text-align: center;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: white;
+            color: #4CAF50;
+            border: 2px solid #4CAF50;
+        }
+
+        .btn-secondary {
+            background: #667eea;
+        }
+
+        .input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 15px;
+            margin-bottom: 12px;
+            background: #f8f8f8;
+        }
+
+        /* Traffic Light */
+        .traffic-light {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .traffic-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 70px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .status-green { background: linear-gradient(135deg, #4CAF50, #66BB6A); }
+        .status-yellow { background: linear-gradient(135deg, #FFC107, #FFD54F); }
+        .status-red { background: linear-gradient(135deg, #f44336, #E57373); }
+
+        .status-text {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+        }
+
+        .status-desc {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Ingredient List */
+        .ingredient-list {
+            margin: 0 16px;
+        }
+
+        .ingredient-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+
+        .ingredient-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: #1a1a1a;
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .badge-safe { background: #C8E6C9; color: #2E7D32; }
+        .badge-caution { background: #FFF9C4; color: #F57F17; }
+        .badge-avoid { background: #FFCDD2; color: #C62828; }
+
+        /* Expert Post */
+        .expert-post {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin: 12px 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .expert-header {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .expert-info {
+            flex: 1;
+        }
+
+        .expert-name {
+            font-weight: 700;
+            font-size: 15px;
+            color: #1a1a1a;
+        }
+
+        .expert-badge {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+
+        .expert-spec {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .post-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+            line-height: 1.4;
+        }
+
+        .post-content {
+            font-size: 14px;
+            color: #444;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .post-stats {
+            display: flex;
+            gap: 16px;
+            padding-top: 12px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* Map */
+        .map-container {
+            height: 400px;
+            background: linear-gradient(to bottom, #e8f5e9, #c8e6c9);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-pin {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .map-pin:hover {
+            transform: scale(1.1);
+        }
+
+        .pin-green { border: 4px solid #4CAF50; }
+        .pin-yellow { border: 4px solid #FFC107; }
+        .pin-red { border: 4px solid #f44336; }
+
+        /* Place Card */
+        .place-card {
+            background: white;
+            border-radius: 16px 16px 0 0;
+            padding: 20px;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        }
+
+        .place-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .place-type {
+            display: inline-block;
+            background: #E3F2FD;
+            color: #1976D2;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .place-rating {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .rating-bar {
+            flex: 1;
+            height: 8px;
+            border-radius: 4px;
+            background: #e0e0e0;
+        }
+
+        .rating-bar.filled-green { background: #4CAF50; }
+        .rating-bar.filled-yellow { background: #FFC107; }
+        .rating-bar.filled-red { background: #f44336; }
+
+        /* Tab Bar */
+        .tab-bar {
+            display: flex;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            position: sticky;
+            bottom: 0;
+        }
+
+        .tab-item {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .tab-item:hover {
+            background: #f5f5f5;
+        }
+
+        .tab-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .tab-label {
+            font-size: 11px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .tab-item.active .tab-icon {
+            color: #4CAF50;
+        }
+
+        .tab-item.active .tab-label {
+            color: #4CAF50;
+        }
+
+        .camera-view {
+            height: 500px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .camera-icon {
+            font-size: 100px;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .camera-text {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .capture-btn {
+            position: absolute;
+            bottom: 40px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: white;
+            border: 4px solid #4CAF50;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .capture-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌿 Katkısız</h1>
+            <p>Sağlıklı Beslenme Asistanınız - Mobil Uygulama Demosu</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showScreen('home')">🏠 Ana Sayfa</button>
+            <button class="tab-btn" onclick="showScreen('result')">📊 Analiz Sonucu</button>
+            <button class="tab-btn" onclick="showScreen('map')">🗺️ Harita</button>
+            <button class="tab-btn" onclick="showScreen('experts')">👨‍🔬 Uzmanlar</button>
+            <button class="tab-btn" onclick="showScreen('profile')">👤 Profil</button>
+            <button class="tab-btn" onclick="showScreen('login')">🔐 Giriş</button>
+            <button class="tab-btn" onclick="showScreen('register')">📝 Kayıt</button>
+            <button class="tab-btn" onclick="showScreen('expert-register')">🎓 Uzman Kaydı</button>
+        </div>
+
+        <div class="phone-container">
+            <div class="phone-frame">
+                <div class="notch"></div>
+                <div class="screen">
+                    <!-- HOME SCREEN -->
+                    <div id="home" class="screen-content active">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>📶 🔋</span>
+                        </div>
+
+                        <div class="app-header">
+                            <div class="app-title">Katkısız</div>
+                        </div>
+
+                        <div class="card" style="margin-top: 40px;">
+                            <h2 style="font-size: 24px; margin-bottom: 8px; text-align: center;">🌿</h2>
+                            <h3 style="font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 12px;">Ürün Etiketini Tara</h3>
+                            <p style="text-align: center; color: #666; margin-bottom: 24px; font-size: 14px;">
+                                Fotoğraf çekerek katkı maddelerini hemen analiz edin
+                            </p>
+
+                            <button class="btn" style="margin-bottom: 12px;">
+                                📷 Kamera Aç
+                            </button>
+                            <button class="btn btn-outline">
+                                🖼️ Galeriden Seç
+                            </button>
+                        </div>
+
+                        <div class="card">
+                            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">💡 Nasıl Çalışır?</h3>
+                            <div style="display: flex; gap: 12px; align-items: start; margin-bottom: 12px;">
+                                <div style="font-size: 24px;">1️⃣</div>
+                                <div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Ürün Etiketi</div>
+                                    <div style="font-size: 13px; color: #666;">İçindekiler listesini fotoğrafla</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 12px; align-items: start; margin-bottom: 12px;">
+                                <div style="font-size: 24px;">2️⃣</div>
+                                <div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Otomatik Analiz</div>
+                                    <div style="font-size: 13px; color: #666;">Yapay zeka katkı maddelerini tespit eder</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 12px; align-items: start;">
+                                <div style="font-size: 24px;">3️⃣</div>
+                                <div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Sonuç & Alternatif</div>
+                                    <div style="font-size: 13px; color: #666;">Trafik ışığı sistemi ve sağlıklı öneriler</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-bar">
+                            <div class="tab-item active">
+                                <div class="tab-icon">🏠</div>
+                                <div class="tab-label">Ana Sayfa</div>
+                            </div>
+                            <div class="tab-item">
+                                <div class="tab-icon">🗺️</div>
+                                <div class="tab-label">Harita</div>
+                            </div>
+                            <div class="tab-item">
+                                <div class="tab-icon">👨‍🔬</div>
+                                <div class="tab-label">Uzmanlar</div>
+                            </div>
+                            <div class="tab-item">
+                                <div class="tab-icon">👤</div>
+                                <div class="tab-label">Profil</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RESULT SCREEN -->
+                    <div id="result" class="screen-content">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>📶 🔋</span>
+                        </div>
+
+                        <div class="app-header">
+                            <div class="app-title">Analiz Sonucu</div>
+                        </div>
+
+                        <div class="traffic-light">
+                            <div class="traffic-circle status-red">🚫</div>
+                            <div class="status-text">Sakıncalı</div>
+                            <div class="status-desc">Bu üründe zararlı katkı maddeleri tespit edildi</div>
+                        </div>
+
+                        <div style="padding: 0 16px; margin-bottom: 16px;">
+                            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Tespit Edilen Katkılar</h3>
+
+                            <div class="ingredient-list">
+                                <div class="ingredient-item">
+                                    <div>
+                                        <div class="ingredient-name">E621 (Monosodyum Glutamat)</div>
+                                        <div style="font-size: 12px; color: #666;">Lezzet güçlendirici</div>
+                                    </div>
+                                    <span class="badge badge-avoid">SAKINCALI</span>
+                                </div>
+
+                                <div class="ingredient-item">
+                                    <div>
+                                        <div class="ingredient-name">E330 (Sitrik Asit)</div>
+                                        <div style="font-size: 12px; color: #666;">Asitlik düzenleyici</div>
+                                    </div>
+                                    <span class="badge badge-caution">DİKKAT</span>
+                                </div>
+
+                                <div class="ingredient-item">
+                                    <div>
+                                        <div class="ingredient-name">E100 (Kurkumin)</div>
+                                        <div style="font-size: 12px; color: #666;">Doğal renklendirici</div>
+                                    </div>
+                                    <span class="badge badge-safe">GÜVENLİ</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px; color: #f44336;">⚠️ E621 Nedir?</h3>
+                            <p style="font-size: 14px; color: #444; line-height: 1.6; margin-bottom: 12px;">
+                                Monosodyum glutamat, yaygın kullanılan bir lezzet güçlendiricidir. Aşırı tüketimi baş ağrısı,
+                                mide bulantısı ve alerjik reaksiyonlara neden olabilir.
+                            </p>
+                            <button class="btn btn-secondary">📍 Alternatif Ürünler Göster</button>
+                        </div>
+
+                        <div style="padding: 16px;">
+                            <button class="btn">✅ Yeni Tarama Yap</button>
+                        </div>
+
+                        <div class="tab-bar">
+                            <div class="tab-item">
+                                <div class="tab-icon">🏠</div>
+                                <div class="tab-label">Ana Sayfa</div>
+                            </div>
+                            <div class="tab-item">
+                                <div class="tab-icon">🗺️</div>
+                                <div class="tab-label">Harita</div>
+                            </div>
+                            <div class="tab-item">
+                                <div class="tab-icon">👨‍🔬</div>
+                                <div class="tab-label">Uzmanlar</div>
+                            </div>
+                            <div class="tab-item">
+                                <div class="tab-icon">👤</div>
+                                <div class="tab-label">Profil</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MAP SCREEN -->
+                    <div id="map" class="screen-content">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>📶 🔋</span>
+                        </div>
+
+                        <div class="app-header">
+                            <div class="app-title">Sağlıklı Mekanlar</div>
+                        </div>
+
+                        <div class="map-container">
+                            <div class="map-pin pin-green" style="top: 30%; left: 25%;">🏪</div>
+                            <div class="map-pin pin-green" style="top: 50%; left: 60%;">🥬</div>
+                            <div class="map-pin pin-yellow" style="top: 40%; left: 70%;">🏬</div>
+                            <div class="map-pin pin-red" style="top: 60%; left: 40%;">🍕</div>
+
+                            <div class="place-card">
+                                <div class="place-name">Organik Şarküteri</div>
+                                <span class="place-type">🏪 Market</span>
+
+                                <div class="place-rating">
+                                    <div class="rating-bar filled-green" style="flex: 7;"></div>
+                                    <div class="rating-bar filled-yellow" style="flex: 2;"></div>
+                                    <div class="rating-bar filled-red" style="flex: 1;"></div>
+                                </div>
+
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; color: #666; margin-bottom: 16px;">
+                                    <span>📊 %70 Katkısız</span>
+                                    <span>📍 850m uzakta</span>
+                                </div>
+
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn" style="flex: 2;">🧭 Yol Tarifi</button>
+                                    <button class="btn btn-outline" style="flex: 1;">💬</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="padding: 16px; background: white;">
+                            <button class="btn btn-secondary">➕ Yeni Mekan Ekle</button>
+                        </div>
+
+                        <div class="tab-bar">
+                            <div class="tab-item">
+                                <div class="tab-icon">🏠</div>
+                                <div class="tab-label">Ana Sayfa</div>
+                            </div>
+                            <div class="tab-item active">
+                                <div class="tab-icon">🗺️</div>
+                                <div class="tab-label">Harita</div>
+                            </div>
+                            <div class="tab-item">
+                                <div class="tab-icon">👨‍🔬</div>
+                                <div class="tab-label">Uzmanlar</div>
+                            </div>
+                            <div class="tab-item">
+                                <div class="tab-icon">👤</div>
+                                <div class="tab-label">Profil</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EXPERTS SCREEN -->
+                    <div id="experts" class="screen-content">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>📶 🔋</span>
+                        </div>
+
+                        <div class="app-header">
+                            <div class="app-title">Uzman Görüşleri</div>
+                        </div>
+
+                        <div style="padding: 16px 16px 0;">
+                            <button class="btn btn-secondary">✍️ Yeni Gönderi Oluştur</button>
+                        </div>
+
+                        <div class="expert-post">
+                            <div class="expert-header">
+                                <div class="avatar">AY</div>
+                                <div class="expert-info">
+                                    <div class="expert-name">
+                                        Dr. Ayşe Yılmaz
+                                        <span class="expert-badge">✓ UZMAN</span>
+                                    </div>
+                                    <div class="expert-spec">Beslenme ve Diyetetik Uzmanı</div>
+                                    <div style="font-size: 12px; color: #999; margin-top: 2px;">2 saat önce</div>
+                                </div>
+                            </div>
+
+                            <div class="post-title">E621 (MSG) ve Sağlık Etkileri: Güncel Araştırmalar</div>
+                            <div class="post-content">
+                                Son yapılan çalışmalar MSG'nin aşırı tüketiminin metabolik sendrom riskini artırabileceğini gösteriyor.
+                                Özellikle hazır gıda tüketiminde dikkatli olunmalı...
+                            </div>
+
+                            <div class="post-stats">
+                                <span>❤️ 124 Beğeni</span>
+                                <span>💬 18 Yorum</span>
+                                <span>👁️ 1.2K Görüntülenme</span>
+                            </div>
+                        </div>
+
+                        <div class="expert-post">
+                            <div class="expert-header">
+                                <div class="avatar" style="background: linear-gradient(135deg, #f093fb, #f5576c);">MK</div>
+                                <div class="expert-info">
+                                    <div class="expert-name">
+                                        Prof. Dr. Mehmet Kaya
+                                        <span class="expert-badge">✓ UZMAN</span>
+                                    </div>
+                                    <div class="expert-spec">Gıda Mühendisi</div>
+                                    <div style="font-size: 12px; color: #999; margin-top: 2px;">1 gün önce</div>
+                                </div>
+                            </div>
+
+                            <div class="post-title">Doğal Renklendirici Alternatifler</div>
+                            <div class="post-content">
+                                Gıda endüstrisinde yapay renklendirici kullanımı azalırken, zerdeçal, pancar suyu ve
+                                havuç özü gibi doğal alternatifler öne çıkıyor...
+                            </div>
+
+                            <div class="post-stats">
+                                <span>❤️ 89 Beğeni</span>
+                                <span>💬 12 Yorum</span>
+                                <span>👁️ 856 Görüntülenme</span>
+                            </div>
+                        </div>
+
+                        <div class="expert-post">
+                            <div class="expert-header">
+                                <div class="avatar" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">SÖ</div>
+                                <div class="expert-info">
+                                    <div class="expert-name">
+                                        Dyt. Selin Özkan
+                                        <span class="expert-badge">✓ UZMAN</span>
+                                    </div>
+                                    <div class="expert-spec">Klinik Diyetisyen</div>
+                                    <div style="font-size: 12px; color: #999; margin-top: 2px;">3 gün önce</div>
+                                </div>
+                            </div>
+
+                            <div class="post-title">Çocuklarda Katkı Maddesi Hassasiyeti</div>
+                            <div class="post-content">
+                                Çocukların katkı maddelerine karşı yetişkinlerden daha hassas olduğu bilinmektedir.
+                                Özellikle E-numaralı renklendirici ve koruyucular dikkat edilmesi gereken...
+                            </div>
+
+                            <div class="post-stats">
+                                <span>❤️ 156 Beğeni</span>
+                                <span>💬 24 Yorum</span>
+                                <span>👁️ 1.8K Görüntülenme</span>
+                            </div>
+                        </div>
+
+                        <div class="tab-bar">
+                            <div class="tab-item">
+                                <div class="tab-icon">🏠</div>
+                                <div class="tab-label">Ana Sayfa</div>
+                            </div>
+                            <div class="tab-item">
+                                <div class="tab-icon">🗺️</div>
+                                <div class="tab-label">Harita</div>
+                            </div>
+                            <div class="tab-item active">
+                                <div class="tab-icon">👨‍🔬</div>
+                                <div class="tab-label">Uzmanlar</div>
+                            </div>
+                            <div class="tab-item">
+                                <div class="tab-icon">👤</div>
+                                <div class="tab-label">Profil</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PROFILE SCREEN -->
+                    <div id="profile" class="screen-content">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>📶 🔋</span>
+                        </div>
+
+                        <div class="app-header">
+                            <div class="app-title">Profilim</div>
+                        </div>
+
+                        <div style="text-align: center; padding: 30px 20px; background: white;">
+                            <div class="avatar" style="width: 80px; height: 80px; margin: 0 auto 16px; font-size: 32px;">
+                                AK
+                            </div>
+                            <div style="font-size: 20px; font-weight: 700; margin-bottom: 4px;">Ahmet Kaya</div>
+                            <div style="font-size: 14px; color: #666;">ahmet@example.com</div>
+                        </div>
+
+                        <div style="display: flex; padding: 20px; background: white; border-bottom: 1px solid #f0f0f0; gap: 20px; justify-content: space-around;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; font-weight: 700; color: #4CAF50;">42</div>
+                                <div style="font-size: 12px; color: #666;">Tarama</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; font-weight: 700; color: #FFC107;">18</div>
+                                <div style="font-size: 12px; color: #666;">Favoriler</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; font-weight: 700; color: #667eea;">7</div>
+                                <div style="font-size: 12px; color: #666;">Mekan</div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">⚙️ Ayarlar</h3>
+
+                            <div style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-weight: 600; margin-bottom: 2px;">🔔 Bildirimler</div>
+                                    <div style="font-size: 12px; color: #666;">Uzman gönderileri ve yorumlar</div>
+                                </div>
+                                <div style="width: 48px; height: 28px; background: #4CAF50; border-radius: 14px; position: relative;">
+                                    <div style="width: 24px; height: 24px; background: white; border-radius: 50%; position: absolute; right: 2px; top: 2px;"></div>
+                                </div>
+                            </div>
+
+                            <div style="padding: 14px 0; border-bottom: 1px solid #f0f0f0;">
+                                <div style="font-weight: 600; margin-bottom: 2px;">📍 Konum İzni</div>
+                                <div style="font-size: 12px; color: #666;">Yakındaki mekanları göster</div>
+                            </div>
+
+                            <div style="padding: 14px 0; border-bottom: 1px solid #f0f0f0;">
+                                <div style="font-weight: 600; margin-bottom: 2px;">🌐 Dil</div>
+                                <div style="font-size: 12px; color: #666;">Türkçe</div>
+                            </div>
+
+                            <div style="padding: 14px 0;">
+                                <div style="font-weight: 600; margin-bottom: 2px;">ℹ️ Uygulama Hakkında</div>
+                                <div style="font-size: 12px; color: #666;">Versiyon 1.0.0</div>
+                            </div>
+                        </div>
+
+                        <div style="padding: 16px;">
+                            <button class="btn" style="background: #f44336;">🚪 Çıkış Yap</button>
+                        </div>
+
+                        <div class="tab-bar">
+                            <div class="tab-item">
+                                <div class="tab-icon">🏠</div>
+                                <div class="tab-label">Ana Sayfa</div>
+                            </div>
+                            <div class="tab-item">
+                                <div class="tab-icon">🗺️</div>
+                                <div class="tab-label">Harita</div>
+                            </div>
+                            <div class="tab-item">
+                                <div class="tab-icon">👨‍🔬</div>
+                                <div class="tab-label">Uzmanlar</div>
+                            </div>
+                            <div class="tab-item active">
+                                <div class="tab-icon">👤</div>
+                                <div class="tab-label">Profil</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LOGIN SCREEN -->
+                    <div id="login" class="screen-content">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>📶 🔋</span>
+                        </div>
+
+                        <div style="text-align: center; padding: 60px 20px 40px;">
+                            <div style="font-size: 64px; margin-bottom: 16px;">🌿</div>
+                            <h2 style="font-size: 32px; font-weight: 800; margin-bottom: 8px;">Hoş Geldiniz</h2>
+                            <p style="color: #666; font-size: 14px;">Sağlıklı beslenme yolculuğunuza devam edin</p>
+                        </div>
+
+                        <div class="card">
+                            <input type="email" class="input" placeholder="E-posta adresiniz">
+                            <input type="password" class="input" placeholder="Şifreniz">
+
+                            <div style="text-align: right; margin-bottom: 16px;">
+                                <a href="#" style="font-size: 13px; color: #667eea; text-decoration: none;">Şifremi Unuttum</a>
+                            </div>
+
+                            <button class="btn">Giriş Yap</button>
+
+                            <div style="text-align: center; margin: 20px 0; color: #999; font-size: 13px;">
+                                veya
+                            </div>
+
+                            <button class="btn btn-outline" style="margin-bottom: 12px;">
+                                🍎 Apple ile Giriş
+                            </button>
+                            <button class="btn btn-outline">
+                                🔵 Google ile Giriş
+                            </button>
+                        </div>
+
+                        <div style="text-align: center; padding: 20px;">
+                            <span style="color: #666; font-size: 14px;">Hesabınız yok mu? </span>
+                            <a href="#" style="color: #667eea; font-weight: 600; text-decoration: none;">Kayıt Ol</a>
+                        </div>
+
+                        <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+                            <p>Anonim olarak devam edebilirsiniz</p>
+                            <p style="margin-top: 8px;">✓ Ürün tarama  ✓ Harita görüntüleme</p>
+                        </div>
+                    </div>
+
+                    <!-- REGISTER SCREEN -->
+                    <div id="register" class="screen-content">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>📶 🔋</span>
+                        </div>
+
+                        <div style="text-align: center; padding: 40px 20px 30px;">
+                            <div style="font-size: 64px; margin-bottom: 16px;">🌿</div>
+                            <h2 style="font-size: 28px; font-weight: 800; margin-bottom: 8px;">Hesap Oluştur</h2>
+                            <p style="color: #666; font-size: 14px;">Ücretsiz hesap oluşturun</p>
+                        </div>
+
+                        <div class="card">
+                            <input type="text" class="input" placeholder="Ad Soyad">
+                            <input type="email" class="input" placeholder="E-posta">
+                            <input type="password" class="input" placeholder="Şifre (min. 6 karakter)">
+                            <input type="password" class="input" placeholder="Şifre Tekrar">
+
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: flex; align-items: start; gap: 8px; font-size: 12px; color: #666;">
+                                    <input type="checkbox" style="margin-top: 2px;">
+                                    <span>
+                                        <a href="#" style="color: #667eea;">Kullanım Şartları</a> ve
+                                        <a href="#" style="color: #667eea;">Gizlilik Politikası</a>'nı okudum, kabul ediyorum
+                                    </span>
+                                </label>
+                            </div>
+
+                            <button class="btn">Kayıt Ol</button>
+
+                            <div style="text-align: center; margin: 20px 0; color: #999; font-size: 13px;">
+                                veya
+                            </div>
+
+                            <button class="btn btn-outline" style="margin-bottom: 12px;">
+                                🍎 Apple ile Kayıt
+                            </button>
+                            <button class="btn btn-outline">
+                                🔵 Google ile Kayıt
+                            </button>
+                        </div>
+
+                        <div style="text-align: center; padding: 20px;">
+                            <span style="color: #666; font-size: 14px;">Zaten hesabınız var mı? </span>
+                            <a href="#" style="color: #667eea; font-weight: 600; text-decoration: none;">Giriş Yap</a>
+                        </div>
+
+                        <div style="text-align: center; padding: 16px;">
+                            <a href="#" style="color: #667eea; font-weight: 600; text-decoration: none;">🎓 Uzman mısınız? Uzman hesabı oluşturun</a>
+                        </div>
+                    </div>
+
+                    <!-- EXPERT REGISTER SCREEN -->
+                    <div id="expert-register" class="screen-content">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>📶 🔋</span>
+                        </div>
+
+                        <div class="app-header">
+                            <div class="app-title">Uzman Kaydı</div>
+                        </div>
+
+                        <div style="background: #E3F2FD; padding: 16px; margin: 16px; border-radius: 12px;">
+                            <div style="font-weight: 700; margin-bottom: 8px; color: #1976D2;">🎓 Uzman Doğrulaması</div>
+                            <div style="font-size: 13px; color: #444; line-height: 1.5;">
+                                Uzman hesabı oluşturmak için akademik bir makale veya sertifika belgeniz olması gerekmektedir.
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <input type="text" class="input" placeholder="Ad Soyad">
+                            <input type="email" class="input" placeholder="E-posta">
+                            <input type="password" class="input" placeholder="Şifre">
+
+                            <div style="margin: 16px 0;">
+                                <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px;">
+                                    Uzmanlık Alanı
+                                </label>
+                                <select class="input">
+                                    <option>Seçiniz...</option>
+                                    <option>Beslenme ve Diyetetik</option>
+                                    <option>Gıda Mühendisliği</option>
+                                    <option>Tıp / İç Hastalıkları</option>
+                                    <option>Biyokimya</option>
+                                    <option>Farmakoloji</option>
+                                    <option>Diğer</option>
+                                </select>
+                            </div>
+
+                            <div style="margin: 16px 0;">
+                                <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px;">
+                                    Kurum/Üniversite
+                                </label>
+                                <input type="text" class="input" placeholder="Çalıştığınız kurum">
+                            </div>
+
+                            <div style="margin: 16px 0;">
+                                <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px;">
+                                    Akademik Makale URL'si
+                                </label>
+                                <input type="url" class="input" placeholder="https://pubmed.ncbi.nlm.nih.gov/...">
+                                <div style="font-size: 12px; color: #666; margin-top: 4px;">
+                                    PubMed, Google Scholar veya ResearchGate linki
+                                </div>
+                            </div>
+
+                            <div style="background: #FFF9C4; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                                <div style="font-size: 12px; color: #F57F17; line-height: 1.5;">
+                                    <strong>⚠️ Doğrulama Süreci:</strong><br>
+                                    Başvurunuz sistem tarafından otomatik olarak kontrol edilecek ve 24 saat içinde sonuçlandırılacaktır.
+                                </div>
+                            </div>
+
+                            <button class="btn btn-secondary">📤 Başvuruyu Gönder</button>
+                        </div>
+
+                        <div style="text-align: center; padding: 20px;">
+                            <a href="#" style="color: #667eea; font-weight: 600; text-decoration: none;">← Normal hesap oluştur</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showScreen(screenId) {
+            // Hide all screens
+            const screens = document.querySelectorAll('.screen-content');
+            screens.forEach(screen => screen.classList.remove('active'));
+
+            // Show selected screen
+            document.getElementById(screenId).classList.add('active');
+
+            // Update tab buttons
+            const tabs = document.querySelectorAll('.tab-btn');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

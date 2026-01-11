@@ -1,0 +1,136 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isExpert() {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'expert';
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Anyone can read user profiles
+      allow read: if true;
+
+      // Users can create their own profile
+      allow create: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       request.resource.data.role == 'user'; // Can't self-assign expert/admin
+
+      // Users can update their own profile (except role)
+      allow update: if isOwner(userId) &&
+                       request.resource.data.role == resource.data.role;
+
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+
+    // Products collection
+    match /products/{productId} {
+      // Anyone can read products (including anonymous users)
+      allow read: if true;
+
+      // Authenticated users can create products
+      allow create: if isSignedIn() &&
+                       request.resource.data.userId == request.auth.uid;
+
+      // Owners can update their products
+      allow update: if isOwner(resource.data.userId);
+
+      // Owners and admins can delete
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    // Places collection
+    match /places/{placeId} {
+      // Anyone can read places
+      allow read: if true;
+
+      // Authenticated users can create places
+      allow create: if isSignedIn() &&
+                       request.resource.data.addedBy == request.auth.uid &&
+                       request.resource.data.verificationCount == 0;
+
+      // Anyone authenticated can update (for comments, verifications)
+      allow update: if isSignedIn();
+
+      // Only owner or admin can delete
+      allow delete: if isOwner(resource.data.addedBy) || isAdmin();
+    }
+
+    // Expert Posts collection
+    match /expertPosts/{postId} {
+      // Anyone can read published posts
+      allow read: if resource.data.published == true;
+
+      // Experts can read their own drafts
+      allow read: if isExpert() &&
+                     resource.data.authorId == request.auth.uid;
+
+      // Only experts can create posts
+      allow create: if isExpert() &&
+                       request.resource.data.authorId == request.auth.uid &&
+                       request.resource.data.sources.size() > 0; // Must have sources
+
+      // Authors can update their own posts
+      allow update: if isExpert() &&
+                       resource.data.authorId == request.auth.uid;
+
+      // Authors and admins can delete
+      allow delete: if (isExpert() && resource.data.authorId == request.auth.uid) ||
+                       isAdmin();
+    }
+
+    // Expert Applications collection
+    match /expertApplications/{applicationId} {
+      // Users can read their own applications
+      allow read: if isOwner(resource.data.userId);
+
+      // Admins can read all applications
+      allow read: if isAdmin();
+
+      // Users can create their own application
+      allow create: if isSignedIn() &&
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.status == 'pending';
+
+      // Only admins can update (for approval/rejection)
+      allow update: if isAdmin();
+
+      // No one can delete applications (for record keeping)
+      allow delete: if false;
+    }
+
+    // Scan History collection
+    match /scanHistory/{historyId} {
+      // Users can only read their own history
+      allow read: if isOwner(resource.data.userId);
+
+      // Users can create their own scan history
+      allow create: if isSignedIn() &&
+                       request.resource.data.userId == request.auth.uid;
+
+      // Users can delete their own history
+      allow delete: if isOwner(resource.data.userId);
+
+      // No updates allowed
+      allow update: if false;
+    }
+  }
+}

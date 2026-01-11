@@ -1,0 +1,73 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*') &&
+             request.resource.size < 10 * 1024 * 1024; // Max 10MB
+    }
+
+    // Product images
+    match /products/{userId}/{imageId} {
+      // Anyone can read
+      allow read: if true;
+
+      // Only authenticated users can upload to their own folder
+      allow write: if isSignedIn() &&
+                      isOwner(userId) &&
+                      isValidImage();
+
+      // Users can delete their own images
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    // Place images
+    match /places/{placeId}/{imageId} {
+      // Anyone can read
+      allow read: if true;
+
+      // Authenticated users can upload
+      allow write: if isSignedIn() && isValidImage();
+
+      // No direct deletion (handled through Firestore)
+      allow delete: if false;
+    }
+
+    // Expert post images
+    match /expertPosts/{userId}/{imageId} {
+      // Anyone can read
+      allow read: if true;
+
+      // Only owners can upload
+      allow write: if isSignedIn() &&
+                      isOwner(userId) &&
+                      isValidImage();
+
+      // Only owners can delete
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    // Profile photos
+    match /profiles/{userId}/{imageId} {
+      // Anyone can read
+      allow read: if true;
+
+      // Only owners can upload their profile photo
+      allow write: if isSignedIn() &&
+                      isOwner(userId) &&
+                      isValidImage();
+
+      // Only owners can delete
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+  }
+}
