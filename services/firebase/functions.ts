@@ -1,8 +1,9 @@
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getFunctions, httpsCallable, Functions } from 'firebase/functions';
 import app from './config';
+import { Platform } from 'react-native';
 
-// Initialize Cloud Functions
-const functions = getFunctions(app);
+// Initialize Cloud Functions (only for non-web platforms)
+const functions: Functions | null = Platform.OS === 'web' ? null : getFunctions(app!);
 
 /**
  * Analysis Result Interface
@@ -30,6 +31,10 @@ export interface AnalysisResult {
  * Analyze product image using OCR and additive detection
  */
 export const analyzeProductImage = async (imageUrl: string): Promise<AnalysisResult> => {
+  if (!functions) {
+    throw new Error('Firebase Functions web demo modunda kullanılamaz');
+  }
+
   try {
     const analyzeImage = httpsCallable<{ imageUrl: string }, AnalysisResult>(
       functions,
@@ -61,6 +66,10 @@ export interface ExpertApplication {
 export const submitExpertApplication = async (
   application: ExpertApplication
 ): Promise<{ success: boolean; message: string }> => {
+  if (!functions) {
+    throw new Error('Firebase Functions web demo modunda kullanılamaz');
+  }
+
   try {
     const submitApp = httpsCallable<ExpertApplication, { success: boolean; message: string }>(
       functions,
@@ -81,6 +90,10 @@ export const submitExpertApplication = async (
 export const approveExpertApplication = async (
   applicationId: string
 ): Promise<{ success: boolean; message: string }> => {
+  if (!functions) {
+    throw new Error('Firebase Functions web demo modunda kullanılamaz');
+  }
+
   try {
     const approve = httpsCallable<{ applicationId: string }, { success: boolean; message: string }>(
       functions,
@@ -102,6 +115,10 @@ export const rejectExpertApplication = async (
   applicationId: string,
   reason?: string
 ): Promise<{ success: boolean; message: string }> => {
+  if (!functions) {
+    throw new Error('Firebase Functions web demo modunda kullanılamaz');
+  }
+
   try {
     const reject = httpsCallable<
       { applicationId: string; reason?: string },
@@ -129,6 +146,10 @@ export interface ReportContent {
 export const reportContent = async (
   report: ReportContent
 ): Promise<{ success: boolean; reportId: string }> => {
+  if (!functions) {
+    throw new Error('Firebase Functions web demo modunda kullanılamaz');
+  }
+
   try {
     const reportFunc = httpsCallable<ReportContent, { success: boolean; reportId: string }>(
       functions,
@@ -147,6 +168,10 @@ export const reportContent = async (
  * Register FCM token for push notifications
  */
 export const registerFCMToken = async (token: string): Promise<{ success: boolean }> => {
+  if (!functions) {
+    throw new Error('Firebase Functions web demo modunda kullanılamaz');
+  }
+
   try {
     const register = httpsCallable<{ token: string }, { success: boolean }>(
       functions,
@@ -165,6 +190,10 @@ export const registerFCMToken = async (token: string): Promise<{ success: boolea
  * Unregister FCM token
  */
 export const unregisterFCMToken = async (token: string): Promise<{ success: boolean }> => {
+  if (!functions) {
+    throw new Error('Firebase Functions web demo modunda kullanılamaz');
+  }
+
   try {
     const unregister = httpsCallable<{ token: string }, { success: boolean }>(
       functions,
@@ -187,6 +216,12 @@ export const notifyNearbyAlternative = async (
   latitude: number,
   longitude: number
 ): Promise<{ success: boolean; notificationSent: boolean; placesCount?: number }> => {
+  if (!functions) {
+    // Don't throw error for notifications, just log it
+    console.log('Firebase Functions disabled in demo mode');
+    return { success: false, notificationSent: false };
+  }
+
   try {
     const notify = httpsCallable<
       { productName: string; latitude: number; longitude: number },

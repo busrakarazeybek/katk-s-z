@@ -8,6 +8,7 @@ import {
   Alert,
   Modal,
   TextInput,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -36,10 +37,14 @@ export default function HomeScreen() {
   });
 
   async function handleImageSelected(uri: string) {
+    console.log('[HomeScreen] Image selected, URI length:', uri?.length);
     setCapturedImage(uri);
     try {
-      await analyzeImage(uri);
+      console.log('[HomeScreen] Calling analyzeImage...');
+      const result = await analyzeImage(uri);
+      console.log('[HomeScreen] Analysis complete:', result);
     } catch (error: any) {
+      console.error('[HomeScreen] Analysis error:', error);
       Alert.alert('Hata', error.message || 'Analiz başarısız oldu');
       setCapturedImage('');
     }
@@ -88,6 +93,32 @@ export default function HomeScreen() {
     setCapturedImage('');
   };
 
+  const handleShare = async () => {
+    if (!currentResult) return;
+
+    const shareText = `Katkısız Analiz Sonucu\n\nDurum: ${currentResult.status === 'green' ? '✅ Güvenli' : currentResult.status === 'yellow' ? '⚠️ Dikkat' : '❌ Tehlikeli'}\nToplam Katkı: ${currentResult.analysis.totalAdditives}\n${currentResult.analysis.dangerousCount > 0 ? `Tehlikeli: ${currentResult.analysis.dangerousCount}\n` : ''}`;
+
+    if (Platform.OS === 'web') {
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: 'Katkısız Analiz Sonucu',
+            text: shareText,
+          });
+        } else {
+          // Fallback: Copy to clipboard
+          await navigator.clipboard.writeText(shareText);
+          Alert.alert('Başarılı', 'Sonuç panoya kopyalandı!');
+        }
+      } catch (error) {
+        console.log('Share cancelled or failed');
+      }
+    } else {
+      // Mobile share - will implement later
+      Alert.alert('Paylaş', shareText);
+    }
+  };
+
   // If showing result
   if (currentResult && capturedImage) {
     return (
@@ -103,6 +134,29 @@ export default function HomeScreen() {
           <Card style={styles.imageCard}>
             <Image source={{ uri: capturedImage }} style={styles.image} />
           </Card>
+
+          {/* Warning Banner if dangerous additives */}
+          {currentResult.analysis.dangerousCount > 0 && (
+            <Card style={styles.warningCard}>
+              <Text style={styles.warningIcon}>🚫</Text>
+              <Text style={styles.warningTitle}>ALMA!</Text>
+              <Text style={styles.warningText}>
+                Bu üründe {currentResult.analysis.dangerousCount} adet tehlikeli katkı maddesi tespit edildi.
+                Sağlığınız için bu ürünü tüketmemeniz önerilir.
+              </Text>
+            </Card>
+          )}
+
+          {/* Success Banner if no additives */}
+          {currentResult.analysis.totalAdditives === 0 && (
+            <Card style={styles.successCard}>
+              <Text style={styles.successIcon}>✅</Text>
+              <Text style={styles.successTitle}>Katkısız Ürün!</Text>
+              <Text style={styles.successText}>
+                Bu üründe hiçbir katkı maddesi bulunmamaktadır. Güvenle tüketebilirsiniz.
+              </Text>
+            </Card>
+          )}
 
           {/* Analysis Summary */}
           <Card>
@@ -121,7 +175,68 @@ export default function HomeScreen() {
                 </Text>
               </View>
             )}
+            {currentResult.analysis.cautionCount > 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryLabel, { color: Colors.primary.yellow }]}>
+                  Dikkat:
+                </Text>
+                <Text style={[styles.summaryValue, { color: Colors.primary.yellow }]}>
+                  {currentResult.analysis.cautionCount}
+                </Text>
+              </View>
+            )}
           </Card>
+
+          {/* Detected Additives List */}
+          {currentResult.additives && currentResult.additives.length > 0 && (
+            <Card>
+              <Text style={styles.summaryTitle}>Tespit Edilen Katkı Maddeleri</Text>
+              {currentResult.additives.map((additive, index) => (
+                <View key={index} style={styles.additiveItem}>
+                  <View style={styles.additiveHeader}>
+                    <Text style={styles.additiveCode}>{additive.code}</Text>
+                    <View
+                      style={[
+                        styles.additiveBadge,
+                        {
+                          backgroundColor:
+                            additive.category === 'avoid'
+                              ? Colors.primary.redLight + '40'
+                              : additive.category === 'caution'
+                              ? Colors.primary.yellowLight + '40'
+                              : Colors.primary.greenLight + '40',
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.additiveBadgeText,
+                          {
+                            color:
+                              additive.category === 'avoid'
+                                ? Colors.primary.red
+                                : additive.category === 'caution'
+                                ? Colors.primary.yellow
+                                : Colors.primary.green,
+                          },
+                        ]}
+                      >
+                        {additive.category === 'avoid'
+                          ? '⚠️ Tehlikeli'
+                          : additive.category === 'caution'
+                          ? '⚠ Dikkat'
+                          : '✓ Güvenli'}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={styles.additiveName}>{additive.name}</Text>
+                  {additive.description && (
+                    <Text style={styles.additiveDescription}>{additive.description}</Text>
+                  )}
+                </View>
+              ))}
+            </Card>
+          )}
 
           {/* Recommendations */}
           {currentResult.recommendations && currentResult.recommendations.length > 0 && (
@@ -164,12 +279,18 @@ export default function HomeScreen() {
               title="Yeni Tarama"
               onPress={handleNewScan}
               variant="outline"
-              style={{ flex: 1, marginRight: 8 }}
+              style={{ flex: 1, marginRight: 4 }}
+            />
+            <Button
+              title="Paylaş"
+              onPress={handleShare}
+              variant="outline"
+              style={{ flex: 1, marginHorizontal: 4 }}
             />
             <Button
               title="Kaydet"
               onPress={handleSaveProduct}
-              style={{ flex: 1, marginLeft: 8 }}
+              style={{ flex: 1, marginLeft: 4 }}
             />
           </View>
         </ScrollView>
@@ -211,18 +332,14 @@ export default function HomeScreen() {
 
         <View style={styles.buttonContainer}>
           <Button
-            title="Kamera Aç"
-            onPress={() => setShowCamera(true)}
+            title="Galeriden Seç"
+            onPress={pickImage}
             size="large"
             style={styles.primaryButton}
           />
-          <Button
-            title="Galeriden Seç"
-            onPress={pickImage}
-            variant="outline"
-            size="large"
-            style={styles.secondaryButton}
-          />
+          <Text style={styles.infoText}>
+            Ürün etiketinin içindekiler kısmının fotoğrafını seçin
+          </Text>
         </View>
 
         <Card style={styles.infoCard}>
@@ -348,6 +465,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   secondaryButton: {},
+  infoText: {
+    fontSize: 13,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+    marginTop: 8,
+  },
   infoCard: {
     backgroundColor: Colors.background.card,
   },
@@ -485,5 +608,88 @@ const styles = StyleSheet.create({
   },
   modalActions: {
     flexDirection: 'row',
+  },
+  warningCard: {
+    backgroundColor: Colors.primary.redLight + '20',
+    borderWidth: 2,
+    borderColor: Colors.primary.red,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  warningIcon: {
+    fontSize: 48,
+    marginBottom: 8,
+  },
+  warningTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: Colors.primary.red,
+    marginBottom: 8,
+  },
+  warningText: {
+    fontSize: 14,
+    color: Colors.text.primary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  successCard: {
+    backgroundColor: Colors.primary.greenLight + '20',
+    borderWidth: 2,
+    borderColor: Colors.primary.green,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  successIcon: {
+    fontSize: 48,
+    marginBottom: 8,
+  },
+  successTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: Colors.primary.green,
+    marginBottom: 8,
+  },
+  successText: {
+    fontSize: 14,
+    color: Colors.text.primary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  additiveItem: {
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.ui.border,
+  },
+  additiveHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  additiveCode: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.text.primary,
+  },
+  additiveBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  additiveBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  additiveName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  additiveDescription: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    lineHeight: 18,
   },
 });

@@ -94,11 +94,9 @@ export const ExpertPost: React.FC<ExpertPostProps> = ({
       {/* Content */}
       <View style={styles.content}>
         <Text style={styles.title}>{post.title}</Text>
-        {post.excerpt && (
-          <Text style={styles.excerpt} numberOfLines={3}>
-            {post.excerpt}
-          </Text>
-        )}
+        <Text style={styles.excerpt} numberOfLines={3}>
+          {post.content.substring(0, 150)}...
+        </Text>
       </View>
 
       {/* Image */}
@@ -133,17 +131,17 @@ export const ExpertPost: React.FC<ExpertPostProps> = ({
             </TouchableOpacity>
             <View style={styles.statItem}>
               <Text style={styles.statIcon}>💬</Text>
-              <Text style={styles.statText}>{post.commentCount}</Text>
+              <Text style={styles.statText}>{post.comments?.length || 0}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statIcon}>👁️</Text>
               <Text style={styles.statText}>{post.views}</Text>
             </View>
           </View>
-          {post.sources && post.sources.length > 0 && (
+          {post.references && post.references.length > 0 && (
             <View style={styles.sources}>
               <Text style={styles.sourcesIcon}>📚</Text>
-              <Text style={styles.sourcesText}>{post.sources.length} kaynak</Text>
+              <Text style={styles.sourcesText}>{post.references.length} kaynak</Text>
             </View>
           )}
         </View>

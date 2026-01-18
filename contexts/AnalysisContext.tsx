@@ -4,6 +4,8 @@ import { analyzeProductImage, AnalysisResult as CloudAnalysisResult } from '../s
 import { createProduct } from '../services/firebase/firestore';
 import { uploadProductImage } from '../services/firebase/storage';
 import { useAuth } from './AuthContext';
+import { Platform } from 'react-native';
+import { ADDITIVES_DATABASE } from '../constants/additives';
 
 // Local type for AnalysisResult (matching Cloud Function response)
 export interface AnalysisResult {
@@ -47,10 +49,90 @@ export const AnalysisProvider: React.FC<AnalysisProviderProps> = ({ children }) 
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [currentImageUri, setCurrentImageUri] = useState<string>('');
 
+  // Mock analysis for web demo
+  const mockAnalyzeImage = async (): Promise<AnalysisResult> => {
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Mock ingredients with some additives
+    const mockIngredients = [
+      'Su',
+      'Şeker',
+      'Karbondioksit',
+      'Karamel renklendirici (E150d)',
+      'Asitlik düzenleyici (E338)',
+      'Aroma verici',
+      'Kafein',
+    ];
+
+    // Find additives in the mock data
+    const foundAdditives = ADDITIVES_DATABASE.filter(additive =>
+      mockIngredients.some(ing =>
+        ing.toLowerCase().includes(additive.code.toLowerCase())
+      )
+    ).map(additive => ({
+      ...additive,
+      found: true,
+    }));
+
+    const dangerousCount = foundAdditives.filter(a => a.category === 'avoid').length;
+    const cautionCount = foundAdditives.filter(a => a.category === 'caution').length;
+
+    let status: 'green' | 'yellow' | 'red' = 'green';
+    let recommendations: string[] = [];
+
+    if (dangerousCount > 0) {
+      status = 'red';
+      recommendations = [
+        'Bu üründe tehlikeli katkı maddeleri bulunmaktadır',
+        'Alternatif ürünlere göz atmanızı öneririz',
+        'Yakındaki katkısız ürün satan yerleri kontrol edin',
+      ];
+    } else if (cautionCount > 0 || foundAdditives.length > 3) {
+      status = 'yellow';
+      recommendations = [
+        'Dikkatli tüketilmesi önerilir',
+        'Günlük tüketim limitine dikkat edin',
+      ];
+    } else {
+      recommendations = [
+        'Bu ürün güvenli katkı maddeleri içeriyor',
+        'Ölçülü tüketim her zaman önerilir',
+      ];
+    }
+
+    return {
+      success: true,
+      fullText: mockIngredients.join(', '),
+      ingredients: mockIngredients,
+      additives: foundAdditives,
+      status,
+      analysis: {
+        totalAdditives: foundAdditives.length,
+        dangerousCount,
+        cautionCount,
+      },
+      recommendations,
+    };
+  };
+
   const analyzeImage = async (imageUri: string): Promise<AnalysisResult> => {
     try {
       setAnalyzing(true);
       setCurrentImageUri(imageUri);
+
+      console.log('[AnalysisContext] Starting analysis, Platform:', Platform.OS);
+      console.log('[AnalysisContext] Image URI:', imageUri);
+
+      // Use mock analysis on web
+      if (Platform.OS === 'web') {
+        console.log('[AnalysisContext] Using mock analysis for web');
+        const result = await mockAnalyzeImage();
+        console.log('[AnalysisContext] Mock analysis result:', result);
+        setCurrentResult(result);
+        setAnalyzing(false);
+        return result;
+      }
 
       // Create temporary product ID for image upload
       const tempId = `temp_${Date.now()}`;

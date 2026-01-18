@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, Alert, TouchableOpacity, Text, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocation } from '../../contexts/LocationContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -14,6 +14,8 @@ import { CommentSheet } from '../../components/map/CommentSheet';
 import { AddPlaceSheet, AddPlaceData } from '../../components/map/AddPlaceSheet';
 import { createPlace, addPlaceComment as addComment } from '../../services/map/places';
 import { openDirections, getAddressFromCoordinates } from '../../services/map/location';
+// @ts-ignore - web only
+import { SimpleMapView } from '../../components/map/SimpleMapView.web';
 
 export default function MapScreen() {
   const {
@@ -169,25 +171,33 @@ export default function MapScreen() {
       </View>
 
       {/* Map */}
-      <CustomMapView
-        initialRegion={{
-          latitude: location.latitude,
-          longitude: location.longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        }}
-        showsUserLocation
-        // @ts-ignore
-        onLongPress={handleMapLongPress}
-      >
-        {nearbyPlaces.map((place) => (
-          <LocationPin
-            key={place.id}
-            place={place}
-            onPress={(p) => setSelectedPlace(p)}
-          />
-        ))}
-      </CustomMapView>
+      {Platform.OS === 'web' ? (
+        <SimpleMapView
+          places={nearbyPlaces}
+          userLocation={location}
+          onPlacePress={(place) => setSelectedPlace(place)}
+        />
+      ) : (
+        <CustomMapView
+          initialRegion={{
+            latitude: location.latitude,
+            longitude: location.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+          showsUserLocation
+          // @ts-ignore
+          onLongPress={handleMapLongPress}
+        >
+          {nearbyPlaces.map((place) => (
+            <LocationPin
+              key={place.id}
+              place={place}
+              onPress={(p) => setSelectedPlace(p)}
+            />
+          ))}
+        </CustomMapView>
+      )}
 
       {/* Place info card */}
       {selectedPlace && !showComments && (
@@ -202,21 +212,23 @@ export default function MapScreen() {
         </View>
       )}
 
-      {/* Legend */}
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: Colors.primary.green }]} />
-          <Text style={styles.legendText}>Katkısız</Text>
+      {/* Legend - only for non-web */}
+      {Platform.OS !== 'web' && (
+        <View style={styles.legend}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: Colors.primary.green }]} />
+            <Text style={styles.legendText}>Katkısız</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: Colors.primary.yellow }]} />
+            <Text style={styles.legendText}>Karışık</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: Colors.primary.red }]} />
+            <Text style={styles.legendText}>Katkılı</Text>
+          </View>
         </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: Colors.primary.yellow }]} />
-          <Text style={styles.legendText}>Karışık</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: Colors.primary.red }]} />
-          <Text style={styles.legendText}>Katkılı</Text>
-        </View>
-      </View>
+      )}
 
       {/* Comment sheet */}
       <CommentSheet

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import * as ImagePickerLib from 'expo-image-picker';
 
 interface UseImagePickerProps {
@@ -7,10 +7,35 @@ interface UseImagePickerProps {
 }
 
 export const useImagePicker = ({ onImageSelected }: UseImagePickerProps) => {
-  const [permission, requestPermission] = ImagePickerLib.useMediaLibraryPermissions();
+  const [permission, requestPermission] = Platform.OS !== 'web'
+    ? ImagePickerLib.useMediaLibraryPermissions()
+    : [{ granted: true }, () => Promise.resolve({ granted: true })];
 
   const pickImage = async () => {
-    // Check permission
+    // For web, use native file input
+    if (Platform.OS === 'web') {
+      console.log('[ImagePicker] Web: Creating file input');
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e: any) => {
+        const file = e.target.files[0];
+        console.log('[ImagePicker] Web: File selected:', file?.name);
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const uri = event.target?.result as string;
+            console.log('[ImagePicker] Web: File read complete, URI length:', uri?.length);
+            onImageSelected(uri);
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+      return;
+    }
+
+    // Check permission for mobile
     if (!permission?.granted) {
       const result = await requestPermission();
       if (!result.granted) {

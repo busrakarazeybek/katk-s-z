@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Location as LocationType, Place, NearbyPlace } from '../types';
 import { getNearbyPlaces } from '../services/map/places';
 import { StorageKeys } from '../constants/config';
+import { Platform } from 'react-native';
 
 interface LocationContextType {
   location: LocationType | null;
@@ -47,6 +48,31 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
 
   const checkPermission = async () => {
     try {
+      // On web, auto-grant permission with default location
+      if (Platform.OS === 'web') {
+        console.log('[LocationContext] Web: Setting default location and fetching places');
+        setHasPermission(true);
+        // Set default Istanbul location for web demo
+        const defaultLocation: LocationType = {
+          latitude: 41.0082,
+          longitude: 28.9784,
+        };
+        setLocation(defaultLocation);
+
+        // Fetch nearby places for web demo
+        setTimeout(async () => {
+          try {
+            const places = await getNearbyPlaces(defaultLocation, 10);
+            console.log('[LocationContext] Web: Fetched', places.length, 'places');
+            setNearbyPlaces(places);
+          } catch (error) {
+            console.error('[LocationContext] Error fetching places:', error);
+          }
+        }, 100);
+
+        return;
+      }
+
       const { status } = await Location.getForegroundPermissionsAsync();
       setHasPermission(status === 'granted');
     } catch (error) {

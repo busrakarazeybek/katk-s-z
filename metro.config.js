@@ -22,6 +22,8 @@
 
 // Learn more https://docs.expo.io/guides/customizing-metro
 const { getDefaultConfig } = require('expo/metro-config');
+const fs = require('fs');
+const path = require('path');
 
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
@@ -35,22 +37,53 @@ if (config.cacheStores) {
 // Fix for web bundling - resolve React Native modules for web
 const defaultResolver = config.resolver || {};
 const originalResolveRequest = defaultResolver.resolveRequest;
-const path = require('path');
 
 config.resolver = {
   ...defaultResolver,
-  sourceExts: [...(defaultResolver.sourceExts || []), 'web.js', 'web.ts', 'web.tsx'],
+  sourceExts: [...(defaultResolver.sourceExts || [])],
+  platforms: ['ios', 'android', 'web'],
   resolveRequest: (context, moduleName, platform) => {
+    // Try to resolve platform-specific files first for web
+    if (platform === 'web') {
+      const platformSpecificExtensions = ['.web.tsx', '.web.ts', '.web.jsx', '.web.js'];
+      const originDir = context.originModulePath ? path.dirname(context.originModulePath) : context.projectRoot;
+
+      // Only try platform-specific resolution for relative imports
+      if (moduleName.startsWith('.')) {
+        for (const ext of platformSpecificExtensions) {
+          try {
+            const platformFile = moduleName.replace(/\.(tsx?|jsx?)$/, '') + ext;
+            const fullPath = path.resolve(originDir, platformFile);
+            if (fs.existsSync(fullPath)) {
+              return {
+                filePath: fullPath,
+                type: 'sourceFile',
+              };
+            }
+          } catch (e) {
+            // Continue trying
+          }
+        }
+      }
+    }
+
+    // Block react-native-maps on web (we use Google Maps instead)
+    if (platform === 'web' && moduleName.startsWith('react-native-maps')) {
+      return {
+        type: 'empty',
+      };
+    }
+
     // Handle React Native Platform module for web
     if (platform === 'web') {
       const originPath = context.originModulePath || '';
-      
+
       // Handle relative path imports to Platform from React Native files
       if (originPath.includes('react-native') && moduleName.startsWith('../')) {
         try {
           // Resolve the full path
           const fullPath = path.resolve(path.dirname(originPath), moduleName);
-          
+
           // Check if it's trying to access Utilities/Platform
           if (fullPath.includes('react-native') && fullPath.includes('Utilities/Platform')) {
             return {
@@ -62,7 +95,7 @@ config.resolver = {
           // Continue to default resolver
         }
       }
-      
+
       // Direct check for Platform module
       if (moduleName.includes('Utilities/Platform') || moduleName === '../Utilities/Platform') {
         try {
@@ -75,7 +108,7 @@ config.resolver = {
         }
       }
     }
-    
+
     // Use default resolver
     if (originalResolveRequest) {
       return originalResolveRequest(context, moduleName, platform);

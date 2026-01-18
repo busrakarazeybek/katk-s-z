@@ -18,6 +18,7 @@ export default function TabLayout() {
           paddingBottom: 8,
           paddingTop: 8,
         },
+        tabBarShowLabel: false,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
@@ -50,6 +51,18 @@ export default function TabLayout() {
         options={{
           title: 'Profil',
           tabBarIcon: ({ color, size }) => <TabBarIcon name="👤" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="map-old"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="experts-old"
+        options={{
+          href: null,
         }}
       />
     </Tabs>
